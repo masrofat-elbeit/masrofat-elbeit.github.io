@@ -216,6 +216,7 @@ nav.tabs button.on{color:var(--accent-text);font-weight:700}
 .grab{width:56px;height:5px;margin:2px auto 8px;cursor:grab}
 .sheet>div{touch-action:pan-y;will-change:transform}
 .toast{cursor:pointer}
+.toast .chip{background:transparent;color:inherit;border-color:currentColor;font-weight:700;padding:3px 12px}
 html.modal,html.modal body{overscroll-behavior-y:none;overflow:hidden}
 header.top{flex-wrap:wrap;row-gap:8px}
 header.top .who{flex:1 1 100%}
@@ -311,6 +312,11 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 .pill.pr{flex-direction:row}.pill.pr span{font-size:14px;color:var(--ink)}
 .sal3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
 .sal3 div{display:flex;flex-direction:column;min-width:0}.sal3 small{font-size:11px;color:var(--muted)}.sal3 b{font-size:16px}
+.vmic{width:96px;height:96px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;margin:4px auto;box-shadow:var(--shadow)}
+.vmic svg{width:42px;height:42px;stroke:currentColor;fill:none;stroke-width:2}
+.vmic.live{animation:vpulse 1.2s ease-in-out infinite}
+@keyframes vpulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 16px color-mix(in srgb,var(--accent) 0%,transparent)}}
+@media (prefers-reduced-motion:reduce){.vmic.live{animation:none;outline:4px solid var(--accent-soft)}}
 /* look picker */
 .skins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .skin{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px;align-items:stretch;font:inherit;color:inherit}
@@ -339,6 +345,7 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
       <button class="back" id="backBtn" data-act="back" hidden><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
       <button class="av" id="avBtn" data-act="profile"></button>
       <div class="brand"><span id="title">مصروفات البيت</span><small id="sub"></small></div>
+      <button class="iconbtn" id="micBtn" data-act="voiceOpen"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button class="iconbtn" id="shareBtn" data-open="share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
     </div>
     <div class="month"><button id="mPrev"></button><span id="mLabel"></span><button id="mNext"></button></div>
@@ -353,7 +360,7 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 27';
+const VER='2026-11-25 · 28';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -654,7 +661,7 @@ function installSteps(){
   if(k==='android')return L(`<ol class="steps"><li>اضغط ⋮ أعلى الشاشة.</li><li>اختر <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.</li></ol>`,`<ol class="steps"><li>Tap ⋮ at the top right.</li><li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li></ol>`);
   return L(`<ol class="steps"><li>على الحاسوب: اضغط أيقونة التثبيت في نهاية شريط العنوان، أو ⋯ ← <b>«التطبيقات»</b> ← <b>«تثبيت»</b>.</li><li>على الهاتف: صوّر رمز QR من «شارك التطبيق».</li></ol>`,`<ol class="steps"><li>On a computer: click the install icon at the end of the address bar, or ⋯ → <b>Apps</b> → <b>Install</b>.</li><li>On a phone: scan the QR code from "Share the app".</li></ol>`);
 }
-function keepMine(next){next.profile=S.profile;next.lang=S.lang;next.cur=S.cur;next.skin=S.skin;next.tint=S.tint;next.cards=S.cards;next.nav=S.nav;next.rateAuto=S.rateAuto;if(S.rateAuto&&RATE.buy)next.rate=RATE.buy;return next}
+function keepMine(next){next.profile=S.profile;next.lang=S.lang;next.cur=S.cur;next.skin=S.skin;next.tint=S.tint;next.cards=S.cards;next.nav=S.nav;next.voiceAuto=S.voiceAuto;next.voiceSave=S.voiceSave;next.rateAuto=S.rateAuto;if(S.rateAuto&&RATE.buy)next.rate=RATE.buy;return next}
 
 let curId=(S.periods[S.periods.length-1]||{}).id, tab='home', filter='*', QUICK=false;
 const UNLOCKED=new Set();
@@ -771,6 +778,94 @@ function lockBanner(c){
   return `<div class="lock"><span>${ro?'🔒 ':''}${L('أُغلق هذا الشهر · إجمالي المصروفات','This month is closed · total spent')} <b>${fmt(c.spent)}</b> ${CUR()}</span>
     <button class="chip" data-act="${ro?'unlock':'lock'}">${ro?L('فتحه للتعديل','Unlock to edit'):L('إغلاقه مجددًا','Lock again')}</button></div>`;
 }
+/* ---------- voice commands: speak an expense or a new salary; understood here on the phone, no AI service ---------- */
+const VNORM=s=>String(s||'').toLowerCase().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+  .replace(/[إأآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[ًٌٍَُِّْـ]/g,'').replace(/(\d)[,٬،](?=\d{3}\b)/g,'$1').replace(/٫/g,'.');
+const VW={'واحد':1,'اثنين':2,'اتنين':2,'اثنان':2,'ثلاثه':3,'تلاته':3,'ثلاث':3,'تلات':3,'اربعه':4,'اربع':4,'خمسه':5,'خمس':5,'سته':6,'ست':6,'سبعه':7,'سبع':7,'ثمانيه':8,'تمانيه':8,'ثمان':8,'تمن':8,'تسعه':9,'تسع':9,'عشره':10,'عشر':10,
+  'حداشر':11,'احد عشر':11,'اتناشر':12,'اثنا عشر':12,'تلاتاشر':13,'اربعتاشر':14,'خمستاشر':15,'ستاشر':16,'سبعتاشر':17,'تمنتاشر':18,'تسعتاشر':19,
+  'عشرين':20,'عشرون':20,'ثلاثين':30,'تلاتين':30,'اربعين':40,'خمسين':50,'ستين':60,'سبعين':70,'ثمانين':80,'تمانين':80,'تسعين':90,
+  'ميه':100,'مايه':100,'مائه':100,'مية':100,'ميت':100,'ميتين':200,'مائتين':200,'مئتين':200,'مئتان':200,'تلتميه':300,'ثلاثمائه':300,'ثلاثميه':300,'ربعميه':400,'اربعمائه':400,'اربعميه':400,'خمسميه':500,'خمسمائه':500,'ستميه':600,'ستمائه':600,'سبعميه':700,'سبعمائه':700,'تمنميه':800,'ثمانمائه':800,'تسعميه':900,'تسعمائه':900};
+function vAmount(t){
+  const d=t.match(/\d+(?:\.\d+)?/);
+  if(d){let n=parseFloat(d[0]);const after=t.slice(d.index+d[0].length,d.index+d[0].length+8);if(/^\s*(الف|الاف|k)/.test(after))n*=1000;return n}
+  let total=0,cur=0,seen=false,lastMag=0;
+  for(let w of t.split(/\s+/)){if(w!=='واحد')w=w.replace(/^و(?=\S{3,})/,'');
+    if(w==='الف'||w==='الاف'||w==='الوف'){total+=(cur||1)*1000;cur=0;seen=true;lastMag=1000;continue}
+    if(w==='الفين'||w==='الفان'){total+=2000;cur=0;seen=true;lastMag=1000;continue}
+    if(w==='ونص'||w==='نص'){if(seen)total+=lastMag/2;continue}
+    if(VW[w]!=null){cur+=VW[w];seen=true;lastMag=VW[w]>=100?100:0}}
+  return seen?total+cur:0;
+}
+const VCATS=[
+  [['اكل','اكله','طعام','خضار','خضروات','فاكهه','فواكه','لحمه','لحوم','فراخ','دجاج','سمك','عيش','خبز','سوبرماركت','بقاله','غدا','غداء','عشا','عشاء','فطار','فطور','مطعم','اكل بره','طلبات','لبن','حليب'],['أكل وشرب','طعام وشراب']],
+  [['بنزين','وقود','سولار','بانزين'],['بنزين','وقود']],
+  [['مواصلات','اوبر','كريم','تاكسي','ميكروباص','مترو','اتوبيس','باص','توكتوك'],['مواصلات']],
+  [['دوا','دواء','ادويه','صيدليه','دكتور','طبيب','علاج','تحاليل','مستشفي','كشف'],['صحة وأدوية']],
+  [['الاولاد','الاطفال','العيال','مصروف الاولاد','لعب','حضانه'],['الأولاد','الأطفال']],
+  [['لبس','هدوم','ملابس','جزمه','حذاء','قميص','بنطلون','جاكيت','معطف'],['لبس','ملابس']],
+  [['خروجه','خروج','سينما','قهوه','كافيه','نزهه','فسحه','ترفيه'],['خروجات','ترفيه ونزهات']],
+  [['منظفات','صيانه','سباك','كهربائي','ادوات','مستلزمات','البيت'],['مصاريف البيت','مستلزمات البيت']],
+  [['هديه','هدايا','صدقه','تبرع','زكاه','عيديه'],['هدايا وتبرعات']]];
+const VSTOP=new Set(['صرفت','دفعت','ضيف','اضف','اضافه','سجل','سجلي','حط','في','على','علي','عل','من','ب','بـ','مبلغ','المبلغ','جنيه','جنيها','جنيهات','ج','ريال','درهم','دينار','دولار','المصروفات','المصاريف','مصروف','مصاريف','يوميه','اليوميه','النهارده','النهاردة','اليوم','امبارح','امس','اول','يا','لو','سمحت','مسمي','اسمه','اسم','و','ال','بتاع','بتاعه','حاجه','الف','الاف','الفين','ونص','نص']);
+function parseCmd(raw){
+  const t=VNORM(raw).replace(/[.!؟?،,]/g,' ').replace(/\s+/g,' ').trim();
+  const r={raw,amount:vAmount(t),date:TODAY,kind:'daily'};
+  if(/(اول امبارح|اول امس)/.test(t))r.date=addDays(TODAY,-2);else if(/(امبارح|امس)/.test(t))r.date=addDays(TODAY,-1);
+  if(/(مرتب|راتب|قبضت|القبض|دخل جديد|شهر جديد)/.test(t)&&!/(صرفت|دفعت)/.test(t)){r.kind='salary';r.cur=/(دولار|\$|usd)/.test(t)&&dollarOK()?'USD':'EGP';return r}
+  const w=S.wallets.find(x=>{const n=VNORM(x.name);return n.length>1&&t.includes(n)});if(w)r.from=w.id;
+  let cat=S.cats.find(c=>{const n=VNORM(c);return n.length>2&&t.includes(n)});
+  let hit='';
+  if(!cat)for(const [keys,names] of VCATS){const k=keys.find(k=>new RegExp('(^|\\s|ال|و|ب)'+k+'($|\\s)').test(t));if(k){hit=k;cat=names.map(n=>S.cats.find(c=>VNORM(c)===VNORM(n))).find(Boolean);if(cat)break}}
+  r.cat=cat||S.cats.find(c=>VNORM(c)==='اخري')||S.cats[0];
+  const drop=new Set([...VSTOP,...(w?VNORM(w.name).split(' '):[]),...VNORM(r.cat).split(' ')]);
+  r.note=raw.replace(/[0-9٠-٩.,٬،]+/g,' ').split(/\s+/).filter(x=>x&&!drop.has(VNORM(x))&&VW[VNORM(x).replace(/^و/,'')]==null&&!/^(و?ال?ف|الاف)$/.test(VNORM(x))).join(' ').slice(0,40).trim();
+  return r;
+}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const VOICE={rec:null,on:false,last:null,
+  greet(){const h=new Date().getHours(),n=S.profile.name;return (h<12?L('صباح الخير','Good morning'):L('مساء الخير','Good evening'))+(n?(LANG==='en'?', ':' يا ')+n:'')+L('، كيف أساعدك؟',', how can I help?')},
+  say(text,then){try{if(!('speechSynthesis' in window))throw 0;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=LANG==='en'?'en-US':'ar-EG';u.rate=1.02;let done=false;const go=()=>{if(!done){done=true;then&&then()}};u.onend=go;u.onerror=go;speechSynthesis.speak(u);setTimeout(go,4500)}catch(e){then&&then()}},
+  status(t){const el=$('#vStatus');if(el)el.textContent=t},
+  listen(){
+    if(!SR){this.status(L('اكتب الأمر أو استخدم ميكروفون لوحة المفاتيح، ثم اضغط «نفّذ».','Type the command or use your keyboard\'s microphone, then tap "Do it".'));const i=$('#vText');if(i)i.focus();return}
+    try{if(this.rec)this.rec.abort()}catch(e){}
+    const r=new SR();this.rec=r;r.lang=LANG==='en'?'en-US':'ar-EG';r.interimResults=true;r.maxAlternatives=1;r.continuous=false;
+    r.onstart=()=>{this.on=true;const m=$('#vMic');if(m)m.classList.add('live');this.status(L('أستمع إليك…','Listening…'))};
+    r.onresult=e=>{let txt='',fin=false;for(const x of e.results){txt+=x[0].transcript;if(x.isFinal)fin=true}const i=$('#vText');if(i)i.value=txt;if(fin)this.run(txt)};
+    r.onerror=e=>{this.on=false;const m=$('#vMic');if(m)m.classList.remove('live');
+      this.status(e.error==='not-allowed'||e.error==='service-not-allowed'?L('المس الميكروفون للتحدث. إذا لم يعمل، اسمح للتطبيق باستخدام الميكروفون من إعدادات المتصفح.','Tap the microphone to talk. If it does not work, allow the microphone in your browser settings.'):e.error==='no-speech'?L('لم أسمع شيئًا. المس الميكروفون وتحدث.','I heard nothing. Tap the microphone and talk.'):L('تعذّر الاستماع. اكتب الأمر بدلًا من ذلك.','Could not listen. Type the command instead.'))};
+    r.onend=()=>{this.on=false;const m=$('#vMic');if(m)m.classList.remove('live')};
+    try{r.start()}catch(e){this.status(L('المس الميكروفون للتحدث.','Tap the microphone to talk.'))}
+  },
+  stop(){try{this.rec&&this.rec.abort()}catch(e){}this.on=false;try{speechSynthesis.cancel()}catch(e){}},
+  run(text){
+    text=String(text||'').trim();if(!text)return;
+    const c=parseCmd(text);
+    if(!c.amount){this.status(L('لم أفهم المبلغ. جرّب مثلًا: «صرفت 250 على خضار».','I did not catch the amount. Try: "Spent 250 on vegetables".'));this.say(L('لم أفهم المبلغ','I did not catch the amount'));return}
+    this.stop();
+    if(c.kind==='salary'){{openSheet('newPeriod');const a=$('#nAmt');if(a)a.value=c.amount;const d=$('#nDate');if(d){d.value=c.date;d.dispatchEvent(new Event('change',{bubbles:true}))}
+      const ch=document.querySelector(`#nCur .chip[data-pick="${c.cur}"]`);if(ch)ch.click();toast(L('راجع الراتب ثم اضغط «ابدأ الشهر الجديد»','Check the salary, then tap "Start the new month"'))}return}
+    const before=new Set(S.periods.flatMap(p=>p.daily.map(d=>d.id)));
+    {PRECAT=c.cat;openSheet('daily');
+      $('#fAmt').value=c.amount;$('#fNote').value=c.note;$('#fDate').value=c.date;
+      if(c.from){const ch=document.querySelector(`#fFrom .chip[data-pick="${c.from}"]`);if(ch)ch.click()}
+      if(S.voiceSave==='auto'){$('[data-act="saveDaily"]').click();
+        const p=S.periods.find(p=>p.daily.some(d=>!before.has(d.id)));const n=p&&p.daily.find(d=>!before.has(d.id));
+        if(n){this.last=n.id;undoToast(L(`تم تسجيل ${fmt(n.amount)} ${CUR()} · ${catN(n.cat)}`,`Saved ${fmt(n.amount)} ${CUR()} · ${catN(n.cat)}`));this.say(L(`تم تسجيل ${fmt(n.amount)} على ${catN(n.cat)}`,`Saved ${fmt(n.amount)} for ${catN(n.cat)}`))}}
+      else toast(L('راجع المصروف ثم اضغط «حفظ»','Check the expense, then tap "Save"'))}
+  },
+  undo(){const id=this.last;if(!id)return;S.periods.forEach(p=>{p.daily=p.daily.filter(d=>d.id!==id)});this.last=null;save();render();toast(L('تم التراجع','Undone'))}
+};
+function undoToast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const el=document.createElement('div');el.className='toast';el.innerHTML=`${esc(t)} <button class="chip" data-act="voiceUndo" style="margin-inline-start:8px">${L('تراجع','Undo')}</button>`;document.body.appendChild(el);setTimeout(()=>el.remove(),7000)}
+function voiceSheet(){
+  return `<h3 style="text-align:center">${esc(VOICE.greet())}</h3>
+    <button class="vmic" id="vMic" data-act="voiceMic" aria-label="${L('تحدث','Talk')}"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <p class="note" id="vStatus" style="margin:0;text-align:center;min-height:2.8em">${SR?L('المس الميكروفون وتحدث.','Tap the microphone and talk.'):L('اكتب الأمر أو استخدم ميكروفون لوحة المفاتيح، ثم اضغط «نفّذ».','Type the command or use your keyboard\'s microphone, then tap "Do it".')}</p>
+    <div class="field"><label for="vText">${L('الأمر','Command')}</label><input id="vText" placeholder="${L('مثلًا: صرفت 250 على خضار','e.g. Spent 250 on vegetables')}" enterkeyhint="go"></div>
+    <button class="btn full" data-act="voiceRun">${L('نفّذ','Do it')}</button>
+    <p class="note" style="margin:0">${L('أمثلة: «صرفت 250 على خضار» · «بنزين 700 امبارح» · «دفعت 150 مواصلات من فودافون كاش» · «استلمت الراتب 1400 دولار».','Examples: "Spent 250 on vegetables" · "Fuel 700 yesterday" · "Got my salary 1400 dollars".')}</p>`;
+}
+function openVoice(auto){openSheet('voice');if(auto)VOICE.say(VOICE.greet(),()=>VOICE.listen())}
 /* ---------- look: six shapes, the user's colour, and which home cards show in what order ---------- */
 const SKINS=[
   ['classic',()=>L('الكلاسيكي','Classic'),['#1F1D19','#D9AA28','#FBF8F1']],
@@ -1127,6 +1222,15 @@ function settings(){
     <button class="btn ghost full" data-open="look">${L('غيّر الشكل واللون وترتيب الرئيسية','Change shape, colour and home order')}</button>
   </section>
   <section>
+    <h2>${L('الأوامر الصوتية','Voice commands')} <span class="sub">🎤</span></h2>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <p class="note" style="margin:0">${L('اضغط 🎤 أعلى الشاشة وقل مثلًا «صرفت 250 على خضار» أو «استلمت الراتب 1400 دولار». يُفهم الأمر على هاتفك نفسه.','Tap 🎤 at the top and say e.g. "Spent 250 on vegetables". The command is understood on your phone.')}</p>
+      <div class="field"><label>${L('بعد الأمر الصوتي','After a voice command')}</label><div class="seg"><button class="${S.voiceSave==='auto'?'':'on'}" data-vsave="confirm">${L('اعرض للتأكيد','Show to confirm')}</button><button class="${S.voiceSave==='auto'?'on':''}" data-vsave="auto">${L('احفظ مباشرة','Save right away')}</button></div></div>
+      <label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="voiceAuto" class="chk" ${S.voiceAuto?'checked':''}> ${L('استمع تلقائيًا عند فتح التطبيق (مثلًا بعد «Hey Google، افتح مصروفات البيت»)','Listen automatically when the app opens (e.g. after "Hey Google, open Home Expenses")')}</label>
+      <p class="note" style="margin:0">${L('بدء شهر جديد يحتاج دائمًا إلى تأكيدك. في Chrome يُرسَل الصوت إلى Google لتحويله إلى نص، مثل ميكروفون لوحة المفاتيح.','Starting a new month always needs your confirmation. In Chrome, speech goes to Google to become text, like the keyboard microphone.')}</p>
+    </div>
+  </section>
+  <section>
     <h2>${L('العملة','Currency')}</h2>
     <div class="field"><select id="curSel" aria-label="${L('العملة','Currency')}">${curOpts()}</select></div>
     <p class="note" style="margin:0">${L('تغيير العملة يغيّر رمزها فقط، ولا يحوّل المبالغ المسجّلة.','Changing the currency changes its symbol only; recorded amounts are not converted.')}</p>
@@ -1331,6 +1435,8 @@ function openSheet(kind,o){
     <div class="qrbox"><img src="qr.png" alt="QR"></div>
     <div class="btnrow"><button class="btn" data-act="shareSend">${L('أرسله (واتساب وغيره)','Send (WhatsApp etc.)')}</button><button class="btn ghost" data-act="shareCopy">${L('نسخ الرابط','Copy link')}</button></div>`;
     EDIT=null;
+  } else if(kind==='voice'){
+    html=voiceSheet();EDIT=null;
   } else if(kind==='more'){
     html=`<h3>${L('المزيد','More')}</h3>${[['fixed',L('المصروفات الأساسية','Bills'),L('الإيجار والفواتير والأقساط والديون','Rent, bills, installments and debts')],['money',L('الدخل','Income'),L('الراتب، وبدء شهر جديد، والدخل الإضافي','Salary, new month and extra income')],['settings',L('الإعدادات','Settings'),L('الحساب، والشكل، والعملة، والنسخ الاحتياطي','Account, look, currency and backup')]].map(([k,n,d])=>`<button class="opt" data-act="moreGo" data-t="${k}"><span><b>${n}</b><small>${d}</small></span></button>`).join('')}
     <button class="opt" data-open="look"><span><b>${L('الشكل والرئيسية','Look and home')}</b><small>${L('غيّر الشكل واللون وترتيب الكروت','Change shape, colour and card order')}</small></span></button>`;EDIT=null;
@@ -1363,7 +1469,7 @@ function openSheet(kind,o){
   NAVSHEET=['cat','wMove'].includes(kind)?null:{kind,id:o&&o.id||null};saveNav();
   if(kind==='wMove')updWm();
 }
-function closeSheet(fromBack){if(!sheetOpen())return;$('#overlay').innerHTML='';setTimeout(()=>{SYNC.flush();DRIVE.flush()},50);
+function closeSheet(fromBack){if(!sheetOpen())return;VOICE.stop();$('#overlay').innerHTML='';setTimeout(()=>{SYNC.flush();DRIVE.flush()},50);
   document.documentElement.classList.remove('modal');NAVSHEET=null;saveNav();
   if(!fromBack&&history.state&&history.state.sheet){SKIP_POP=true;try{history.back()}catch(e){SKIP_POP=false}}}
 let SKIP_POP=false, NAVSHEET=null, EXIT_AT=0;
@@ -1381,7 +1487,7 @@ addEventListener('popstate',e=>{
     if(tab!=='home'){tab='home';filter='*';QUICK=false;render();scrollTo(0,0)}
     toast(L('اضغط رجوع مرة أخرى للخروج من التطبيق','Press Back again to leave the app'));return}
   tab=st.tab||'home';filter='*';QUICK=false;render();scrollTo(0,0)});
-addEventListener('keydown',e=>{if(e.key==='Escape'&&sheetOpen())closeSheet()});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&sheetOpen())closeSheet();if(e.key==='Enter'&&e.target.id==='vText'){e.preventDefault();VOICE.run(e.target.value)}});
 /* swipe a sheet down to close it */
 let DRAG=null;
 document.addEventListener('touchstart',e=>{const box=e.target.closest('.sheet>div');if(!box)return;
@@ -1395,7 +1501,7 @@ document.addEventListener('touchend',()=>{if(!DRAG)return;const {box,dy,on}=DRAG
   box.style.transition='transform .2s ease-out';
   if(dy>90){box.style.transform='translateY(110%)';setTimeout(()=>closeSheet(),190)}else box.style.transform=''});
 /* toasts: tap or swipe to dismiss */
-document.addEventListener('pointerdown',e=>{const t=e.target.closest('.toast');if(t)t.remove()});
+document.addEventListener('pointerdown',e=>{const t=e.target.closest('.toast');if(t&&!e.target.closest('button'))t.remove()});
 function toast(t){const el=document.createElement('div');el.className='toast';el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),2400)}
 const numv=id=>parseFloat(String(($(id)||{}).value||'').replace(/,/g,''))||0;
 function readPhoto(file,cb){const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const s=180,c=document.createElement('canvas');c.width=c.height=s;const x=c.getContext('2d');const m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);cb(c.toDataURL('image/jpeg',.82))};img.onerror=()=>toast(L('تعذّرت قراءة هذه الصورة','Could not read that image'));img.src=fr.result};fr.readAsDataURL(file)}
@@ -1423,6 +1529,7 @@ function render(){
   $('#mPrev').setAttribute('aria-label',L('الشهر السابق','Previous month')); $('#mNext').setAttribute('aria-label',L('الشهر التالي','Next month'));
   $('#fab').setAttribute('aria-label',L('إضافة مصروف','Add expense'));
   $('#shareBtn').setAttribute('aria-label',L('شارك التطبيق','Share the app'));
+  $('#micBtn').setAttribute('aria-label',L('أمر صوتي','Voice command'));$('#micBtn').hidden=!P()||isRO();
   document.querySelector('meta[name=apple-mobile-web-app-title]').content=L('مصروفات البيت','Home Expenses');
   const tb=([k,ic,lb])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><svg viewBox="0 0 24 24">${ic}</svg>${lb()}</button>`;
   const cls=SKIN()==='classic', gap=cls?'':'<span class="tabgap"></span>';
@@ -1463,6 +1570,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.editplan){const o=S.plans.find(x=>x.id===t.dataset.editplan);if(o)openSheet('plan',o);return}
   if(t.dataset.editcat){const [list,i]=t.dataset.editcat.split(':');openSheet('cat',{list,name:S[list][+i]});return}
   if(t.dataset.lang){LANG=S.lang=t.dataset.lang;save();render();return}
+  if(t.dataset.vsave){S.voiceSave=t.dataset.vsave;save();render();return}
   if(t.dataset.nav){S.nav=t.dataset.nav;save();render();openSheet('look');return}
   if(t.dataset.skin){S.skin=t.dataset.skin;save();render();openSheet('look');return}
   if(t.dataset.tint!==undefined&&t.closest('.tints')){S.tint=t.dataset.tint||undefined;if(!S.tint)delete S.tint;save();render();openSheet('look');return}
@@ -1644,6 +1752,10 @@ document.addEventListener('click',e=>{
   if(a==='shareCopy'){const done=()=>toast(L('تم نسخ الرابط','Link copied'));(navigator.clipboard?navigator.clipboard.writeText(APP_URL).then(done):Promise.reject()).catch(()=>{prompt(L('انسخ الرابط:','Copy the link:'),APP_URL)});return}
   if(a==='backup'){const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='masrofat-elbeit-backup-'+TODAY+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast(L('تم تنزيل النسخة الاحتياطية','Backup downloaded'));return}
   if(a==='lookDone'){closeSheet();return}
+  if(a==='voiceOpen'){openVoice(true);return}
+  if(a==='voiceMic'){if(VOICE.on)VOICE.stop();else VOICE.listen();return}
+  if(a==='voiceRun'){VOICE.run(($('#vText')||{}).value);return}
+  if(a==='voiceUndo'){const x=t.closest('.toast');if(x)x.remove();VOICE.undo();return}
   if(a==='moreGo'){const k=t.dataset.t;closeSheet();setTimeout(()=>go(k),80);return}
   if(a==='restore'){$('#restoreFile').click();return}
   if(a==='reset'){if(S.periods.length&&!t.dataset.sure){t.dataset.sure='1';t.textContent=L('هل أنت متأكد؟ ستُحذف بياناتك. اضغط مرة أخرى','Sure? Your numbers will be deleted. Tap again');return}S=keepMine(sample());fill();curId=S.periods[S.periods.length-1].id;save();tab='home';render();toast(L('تم تحميل البيانات التجريبية','Sample numbers loaded'));return}
@@ -1655,6 +1767,7 @@ document.addEventListener('change',e=>{
     if(t.checked){t.checked=false;openSheet('payFixed',f)}
     else{f.paid=false;delete f.paidOn;save();render();toast(L('أُعيد إلى «لم يُدفع بعد»','Moved back to "Not paid"'))}}
   if(t.id==='fPaid'){$('#fPaidOnF').hidden=!t.checked}
+  if(t.id==='voiceAuto'){S.voiceAuto=t.checked;save();return}
   if(t.dataset.card){const cs=homeCards(),x=cs.find(y=>y.k===t.dataset.card);if(x){x.on=t.checked;S.cards=cs;save();render()}return}
   if(t.id==='curSel'){S.cur=t.value;if(S.cur!=='EGP')S.rateAuto=false;save();render();toast(L('تم تغيير العملة','Currency changed'));return}
   if(t.id==='pfFile'&&t.files[0]){readPhoto(t.files[0],url=>{PHOTO=url;$('#pfAv').innerHTML=`<img src="${url}" alt="">`});t.value='';return}
@@ -1689,6 +1802,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 setTimeout(()=>fetchRate(false),800);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(!RATE.at||Date.now()-RATE.at>10*60e3))fetchRate(false)});
 setInterval(()=>{if(document.visibilityState==='visible')fetchRate(false)},30*60e3);
+(function(){const v=/[?&]voice=1/.test(location.search);if(v)history.replaceState(null,'',location.pathname);
+  if((v||S.voiceAuto)&&P()&&!isRO())setTimeout(()=>{if(!sheetOpen())openVoice(true)},v?500:900)})();
 if(/[?&]install=1/.test(location.search)&&!isStandalone()){history.replaceState(null,'',location.pathname);setTimeout(()=>{if(!sheetOpen())openSheet('install')},1500)}
 let NAV0=null, REOPEN=false;try{NAV0=JSON.parse(sessionStorage.getItem('masrofat_nav')||'null')}catch(e){}
 if(NAV0&&['home','daily','fixed','money','wallets','settings'].includes(NAV0.tab)){tab=NAV0.tab;if(NAV0.curId&&S.periods.find(x=>x.id===NAV0.curId))curId=NAV0.curId}

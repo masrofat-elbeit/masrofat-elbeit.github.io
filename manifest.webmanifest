@@ -29,5 +29,20 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "أمر صوتي",
+      "short_name": "أمر صوتي",
+      "description": "افتح التطبيق وقل المصروف بصوتك",
+      "url": "/index.html?voice=1",
+      "icons": [
+        {
+          "src": "icon2-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
