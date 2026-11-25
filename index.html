@@ -350,7 +350,7 @@ header.top .who{flex:1 1 100%}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 24';
+const VER='2026-11-25 · 25';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -810,8 +810,9 @@ function topFor(c,closed){
   const days=daysTxt(closed?c.D:c.left);
   const ofTxt=`<span class="num">${fmt(spent)}</span> ${L('من','of')} <span class="num">${fmt(c.budget)}</span>`;
   /* the same light cards under every shape: wallets, then bills still to pay */
-  const bills=closed?[]:p.fixed.filter(f=>!f.paid).slice(0,2);
-  const extras=`${S.wallets.length?`<div class="pill tap" data-go="wallets"><span>${L('المحافظ','Wallets')} · <span class="num">${fmt(wTotal())}</span></span>${S.wallets.slice(0,3).map(w=>`<div class="pr"><span>${esc(w.name)}</span><b>${fmt(wBal(w))}</b></div>`).join('')}</div>`:''}
+  const shown=x=>(homeCards().find(y=>y.k===x)||{}).on!==false;
+  const bills=closed||!shown('unpaid')?[]:p.fixed.filter(f=>!f.paid).slice(0,2);
+  const extras=`${S.wallets.length&&shown('wallets')?`<div class="pill tap" data-go="wallets"><span>${L('المحافظ','Wallets')} · <span class="num">${fmt(wTotal())}</span></span>${S.wallets.slice(0,3).map(w=>`<div class="pr"><span>${esc(w.name)}</span><b>${fmt(wBal(w))}</b></div>`).join('')}</div>`:''}
       ${bills.map(f=>`<div class="pill pr tap" data-go="fixed"><span>${esc(f.name)} · ${L('لم يُدفع','not paid')}</span><b>${fmt(f.amount)}</b></div>`).join('')}`;
   const two=(a,b)=>`<div class="mz2">${a}${b}</div>`;
   const pill=(l,v,attr='')=>`<div class="pill ${attr?'tap':''}" ${attr}><span>${l}</span><b>${v}</b></div>`;
