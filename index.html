@@ -360,7 +360,7 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 28';
+const VER='2026-11-25 · 29';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -863,6 +863,8 @@ function voiceSheet(){
     <p class="note" id="vStatus" style="margin:0;text-align:center;min-height:2.8em">${SR?L('المس الميكروفون وتحدث.','Tap the microphone and talk.'):L('اكتب الأمر أو استخدم ميكروفون لوحة المفاتيح، ثم اضغط «نفّذ».','Type the command or use your keyboard\'s microphone, then tap "Do it".')}</p>
     <div class="field"><label for="vText">${L('الأمر','Command')}</label><input id="vText" placeholder="${L('مثلًا: صرفت 250 على خضار','e.g. Spent 250 on vegetables')}" enterkeyhint="go"></div>
     <button class="btn full" data-act="voiceRun">${L('نفّذ','Do it')}</button>
+    <label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="vSaveNow" class="chk" ${S.voiceSave==='auto'?'checked':''}> ${L('احفظ المصروف مباشرة دون الضغط على «حفظ»','Save the expense right away, without tapping "Save"')}</label>
+    <label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="vListenOpen" class="chk" ${S.voiceAuto?'checked':''}> ${L('استمع إليّ مباشرة عند فتح التطبيق','Listen to me as soon as the app opens')}</label>
     <p class="note" style="margin:0">${L('أمثلة: «صرفت 250 على خضار» · «بنزين 700 امبارح» · «دفعت 150 مواصلات من فودافون كاش» · «استلمت الراتب 1400 دولار».','Examples: "Spent 250 on vegetables" · "Fuel 700 yesterday" · "Got my salary 1400 dollars".')}</p>`;
 }
 function openVoice(auto){openSheet('voice');if(auto)VOICE.say(VOICE.greet(),()=>VOICE.listen())}
@@ -1767,7 +1769,8 @@ document.addEventListener('change',e=>{
     if(t.checked){t.checked=false;openSheet('payFixed',f)}
     else{f.paid=false;delete f.paidOn;save();render();toast(L('أُعيد إلى «لم يُدفع بعد»','Moved back to "Not paid"'))}}
   if(t.id==='fPaid'){$('#fPaidOnF').hidden=!t.checked}
-  if(t.id==='voiceAuto'){S.voiceAuto=t.checked;save();return}
+  if(t.id==='voiceAuto'||t.id==='vListenOpen'){S.voiceAuto=t.checked;save();toast(t.checked?L('سيستمع إليك التطبيق عند فتحه','The app will listen when it opens'):L('لن يستمع التطبيق عند فتحه','The app will not listen when it opens'));return}
+  if(t.id==='vSaveNow'){S.voiceSave=t.checked?'auto':'confirm';save();toast(t.checked?L('سيُحفظ المصروف مباشرة','Expenses will be saved right away'):L('ستراجع المصروف قبل الحفظ','You will check expenses before saving'));return}
   if(t.dataset.card){const cs=homeCards(),x=cs.find(y=>y.k===t.dataset.card);if(x){x.on=t.checked;S.cards=cs;save();render()}return}
   if(t.id==='curSel'){S.cur=t.value;if(S.cur!=='EGP')S.rateAuto=false;save();render();toast(L('تم تغيير العملة','Currency changed'));return}
   if(t.id==='pfFile'&&t.files[0]){readPhoto(t.files[0],url=>{PHOTO=url;$('#pfAv').innerHTML=`<img src="${url}" alt="">`});t.value='';return}
