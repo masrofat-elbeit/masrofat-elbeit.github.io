@@ -272,9 +272,13 @@ header.top .who{flex:1 1 100%}
 .ring>div{width:136px;height:136px;border-radius:50%;background:var(--hero);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .ring b{font-size:24px;font-weight:700;line-height:1.1}
 .ring span{font-size:11.5px;color:var(--hero-muted)}
-.qbar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--hero-ink) 20%,transparent);overflow:hidden}.qbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.qbar{height:10px;border-radius:99px;background:var(--accent-soft);overflow:hidden}.qbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
 .qchips{display:flex;gap:6px;flex-wrap:wrap}
-.qchips button{border:0;background:color-mix(in srgb,var(--hero-ink) 14%,transparent);color:var(--hero-ink);border-radius:999px;padding:6px 12px;font-size:12.5px}
+.qchips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:13px}
+.ledgerpage{border-inline-start:2px solid var(--margin,var(--bad));padding-inline-start:12px;display:flex;flex-direction:column;gap:6px}
+.ledger .ln{color:var(--ink)}
+.ledger .ln em{border-bottom-color:var(--muted)}
+.ledger .tot{border-top-color:var(--ink)}
 .ledger{display:flex;flex-direction:column}
 .ledger .ln{display:flex;align-items:flex-end;gap:6px;min-height:32px;padding-bottom:4px;font-size:15px}
 .ledger .ln em{flex:1;border-bottom:1.5px dotted var(--hero-muted);margin-bottom:6px;font-style:normal}
@@ -797,59 +801,55 @@ function walletsCard(){
 function topFor(c,closed){
   const p=c.p, k=SKIN();
   const pct=Math.min(100,Math.round((c.fixedAll+c.daily)/Math.max(1,c.budget)*100));
-  const lbl=closed?L('المتبقي في نهاية الشهر','Left at the end of the month'):L('المبلغ المتاح معك الآن','Cash you have now');
+  const spent=c.fixedAll+c.daily;
   const range=`${dshort(p.start)} ${L('إلى','to')} ${dshort(c.end)}`;
   const salary=p.salary.cur==='USD'?'$'+fmt(p.salary.amount):fmt(p.salary.amount)+' '+CUR();
   const today=p.daily.filter(d=>d.date===TODAY).reduce((a,d)=>a+d.amount,0);
-  const unpaid=c.fixedAll-c.fixedPaid;
-  if(k==='mizan'){
-    const bills=p.fixed.filter(f=>!f.paid).slice(0,2);
-    return `<div class="mz">
-      <div class="mzring" style="--p:${pct}%"><div><span>${L('صرفت','Spent')}</span><b class="num">${pct}%</b><span><span class="num">${fmt(c.fixedAll+c.daily)}</span> ${L('من','of')} <span class="num">${fmt(c.budget)}</span></span></div></div>
-      <div class="mz2">
-        <div class="pill"><span>${closed?L('المتبقي في نهاية الشهر','Left at month end'):L('المتبقي','Left')}</span><b>${fmt(c.cash)} ${CUR()}</b></div>
-        <div class="pill tap" data-act="goMoney"><span>${closed?L('أيام الشهر','Days in month'):L('باقي على الدخل','Until next income')}</span><b>${daysTxt(closed?c.D:c.left)}</b></div>
-      </div>
-      ${S.wallets.length?`<div class="pill tap" data-go="wallets"><span>${L('المحافظ','Wallets')} · <span class="num">${fmt(wTotal())}</span></span>${S.wallets.slice(0,3).map(w=>`<div class="pr"><span>${esc(w.name)}</span><b>${fmt(wBal(w))}</b></div>`).join('')}</div>`:''}
-      ${closed?'':bills.map(f=>`<div class="pill pr tap" data-go="fixed"><span>${esc(f.name)} · ${L('لم يُدفع','not paid')}</span><b>${fmt(f.amount)}</b></div>`).join('')}
-    </div>`;
-  }
-  if(k==='raseed') return `<div class="hero">
-      <div><div class="lbl">${lbl}</div><div class="big" style="color:var(--hero-ink)"><span class="num">${fmt(c.cash)}</span> <small>${CUR()}</small></div></div>
+  const leftLbl=closed?L('المتبقي في نهاية الشهر','Left at month end'):L('المتبقي','Left');
+  const daysLbl=closed?L('أيام الشهر','Days in month'):L('باقي على الدخل','Until next income');
+  const days=daysTxt(closed?c.D:c.left);
+  const ofTxt=`<span class="num">${fmt(spent)}</span> ${L('من','of')} <span class="num">${fmt(c.budget)}</span>`;
+  /* the same light cards under every shape: wallets, then bills still to pay */
+  const bills=closed?[]:p.fixed.filter(f=>!f.paid).slice(0,2);
+  const extras=`${S.wallets.length?`<div class="pill tap" data-go="wallets"><span>${L('المحافظ','Wallets')} · <span class="num">${fmt(wTotal())}</span></span>${S.wallets.slice(0,3).map(w=>`<div class="pr"><span>${esc(w.name)}</span><b>${fmt(wBal(w))}</b></div>`).join('')}</div>`:''}
+      ${bills.map(f=>`<div class="pill pr tap" data-go="fixed"><span>${esc(f.name)} · ${L('لم يُدفع','not paid')}</span><b>${fmt(f.amount)}</b></div>`).join('')}`;
+  const two=(a,b)=>`<div class="mz2">${a}${b}</div>`;
+  const pill=(l,v,attr='')=>`<div class="pill ${attr?'tap':''}" ${attr}><span>${l}</span><b>${v}</b></div>`;
+  let top='';
+  if(k==='mizan') top=`<div class="mzring" style="--p:${pct}%"><div><span>${L('صرفت','Spent')}</span><b class="num">${pct}%</b><span>${ofTxt}</span></div></div>
+      ${two(pill(leftLbl,`${fmt(c.cash)} ${CUR()}`),pill(daysLbl,days,'data-act="goMoney"'))}`;
+  else if(k==='raseed') top=`<div><div class="muted" style="font-size:13px">${leftLbl}</div><div class="bignum" style="font-size:40px"><span class="num">${fmt(c.cash)}</span> <small style="font-size:16px;font-weight:500">${CUR()}</small></div></div>
       <div class="qbar"><i style="width:${pct}%"></i></div>
-      <div class="lbl">${L('صرفت','Spent')} <span class="num">${fmt(c.fixedAll+c.daily)}</span> ${L('من','of')} <span class="num">${fmt(c.budget)}</span> ${CUR()} · ${range}</div>
-      ${closed||isRO()?'':`<div class="qchips">${S.cats.slice(0,6).map(x=>`<button data-qcat="${esc(x)}">+ ${esc(catN(x))}</button>`).join('')}</div>`}
-      </div>`;
-  if(k==='daftar') return `<div class="hero">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-family:var(--f-num);font-size:17px">${L('حساب ','Account · ')}${pname(p)}</b><span class="lbl">${range}</span></div>
+      <div class="muted" style="font-size:12.5px">${L('صرفت','Spent')} ${ofTxt} ${CUR()} · ${range}</div>
+      ${two(pill(L('صرفت','Spent'),`<span class="num">${pct}%</span>`,'data-go="daily"'),pill(daysLbl,days,'data-act="goMoney"'))}
+      ${closed||isRO()?'':`<div class="qchips">${S.cats.slice(0,6).map(x=>`<button data-qcat="${esc(x)}">+ ${esc(catN(x))}</button>`).join('')}</div>`}`;
+  else if(k==='daftar') top=`<div class="ledgerpage">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-family:var(--f-num);font-size:17px">${L('حساب ','Account · ')}${pname(p)}</b><span class="muted" style="font-size:12px">${range}</span></div>
       <div class="ledger">
         <div class="ln tap" data-act="goMoney"><span>${L('الدخل','Income')}</span><em></em><b>${fmt(c.income)}</b></div>
         <div class="ln tap" data-go="fixed"><span>${L('المصروفات الأساسية','Bills')}</span><em></em><b>${fmt(c.fixedPaid)}</b></div>
         <div class="ln tap" data-go="daily"><span>${L('المصروفات اليومية','Daily')}</span><em></em><b>${fmt(c.daily)}</b></div>
-        ${S.wallets.length?`<div class="ln tap" data-go="wallets"><span>${L('في المحافظ','In wallets')}</span><em></em><b>${fmt(wTotal())}</b></div>`:''}
-        <div class="ln tot"><span>${lbl}</span><em></em><b class="hl" style="font-size:20px">${fmt(c.cash)} ${CUR()}</b></div>
+        <div class="ln"><span>${daysLbl}</span><em></em><b>${days}</b></div>
+        <div class="ln tot"><span>${leftLbl}</span><em></em><b class="hl" style="font-size:20px">${fmt(c.cash)} ${CUR()}</b></div>
       </div></div>`;
-  if(k==='hassala'){
+  else if(k==='hassala'){
     const byCat={};p.daily.forEach(d=>byCat[d.cat]=(byCat[d.cat]||0)+d.amount);
-    const top=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5), mx=top.length?top[0][1]:1;
-    const cols=['var(--accent)','var(--usd)','var(--good)','var(--accent)','var(--usd)'];
-    return `<div style="display:flex;justify-content:space-between;align-items:end;gap:8px"><div><div class="muted" style="font-size:13px">${lbl}</div><div class="bignum" style="font-size:38px"><span class="num">${fmt(c.cash)}</span> <small style="font-size:15px">${CUR()}</small></div></div><span class="muted" style="font-size:12px">${range}</span></div>
+    const tops=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,4), mx=tops.length?tops[0][1]:1;
+    const cols=['var(--accent)','var(--usd)','var(--good)','var(--accent)'];
+    top=`<div style="display:flex;justify-content:space-between;align-items:end;gap:8px"><div><div class="muted" style="font-size:13px">${leftLbl}</div><div class="bignum" style="font-size:38px"><span class="num">${fmt(c.cash)}</span> <small style="font-size:15px">${CUR()}</small></div></div><span class="muted" style="font-size:12.5px;text-align:end">${daysLbl}<br><b style="color:var(--ink)">${days}</b></span></div>
       <div class="jars">
-        ${top.map(([n,v],i)=>`<button class="jar" data-qcat="${esc(n)}" style="--f:${Math.max(6,v/mx*100)}%;--c:${cols[i]}"><span>${esc(catN(n))}</span><b>${fmt(v)}</b></button>`).join('')}
-        <button class="jar" data-go="wallets" style="--f:${S.wallets.length?60:0}%;--c:var(--good)"><span>${L('المحافظ','Wallets')}</span><b>${fmt(wTotal())}</b></button>
+        ${tops.map(([n,v],i)=>`<button class="jar" data-qcat="${esc(n)}" style="--f:${Math.max(6,v/mx*100)}%;--c:${cols[i]}"><span>${esc(catN(n))}</span><b>${fmt(v)}</b></button>`).join('')}
         <button class="jar" data-go="fixed" style="--f:${Math.round(c.fixedPaid/Math.max(1,c.fixedAll)*100)}%;--c:var(--usd)"><span>${L('الأساسية','Bills')}</span><b>${fmt(c.fixedPaid)}<small class="muted" style="font-size:12px"> / ${fmt(c.fixedAll)}</small></b></button>
         ${closed||isRO()?'':`<button class="jar add" data-open="daily"><span>+ ${L('مصروف اليوم','Today\'s expense')}</span></button>`}
       </div>`;
-  }
-  /* lamsa */
-  return `<div><div class="muted" style="font-size:13px">${lbl}</div><div class="bignum"><span class="num">${fmt(c.cash)}</span></div><div class="muted" style="font-size:13px">${CUR()} · ${closed?range:L(`${c.left} يومًا حتى نهاية الشهر`,`${c.left} days to month end`)}</div></div>
+  } else top=`<div><div class="muted" style="font-size:13px">${leftLbl}</div><div class="bignum"><span class="num">${fmt(c.cash)}</span></div><div class="muted" style="font-size:13px">${CUR()} · ${range}</div></div>
     <div class="bento">
-      <button class="tile tall" data-go="daily" style="background:#FFB4A2"><span>${L('صرفت','Spent')}</span><b class="num">${pct}%</b><span class="num">${fmt(c.fixedAll+c.daily)} / ${fmt(c.budget)}</span></button>
+      <button class="tile tall" data-go="daily" style="background:#FFB4A2"><span>${L('صرفت','Spent')}</span><b class="num">${pct}%</b><span>${ofTxt}</span></button>
       <button class="tile" data-go="daily" style="background:#B8E0D2"><span>${L('اليوم','Today')}</span><b class="num">${fmt(today)}</b></button>
-      <button class="tile" data-go="wallets" style="background:#CDB4DB"><span>${L('المحافظ','Wallets')}</span><b class="num">${fmt(wTotal())}</b></button>
-      <button class="tile wide" data-go="fixed" style="background:#FDF0D5"><span>${unpaid>0?L('أساسية لم تُدفع','Bills not paid'):L('الأساسية','Bills')}</span><b class="num">${fmt(unpaid>0?unpaid:c.fixedAll)} ${CUR()}</b></button>
-      <button class="tile wide" data-act="goMoney" style="background:#E8E4F0"><span>${L('الراتب ✎','Salary ✎')}</span><b>${salary}</b></button>
+      <button class="tile" data-act="goMoney" style="background:#CDB4DB"><span>${daysLbl}</span><b>${days}</b></button>
+      <button class="tile wide" data-act="goMoney" style="background:#FDF0D5"><span>${L('الراتب ✎','Salary ✎')}</span><b>${salary}</b></button>
     </div>`;
+  return `<div class="mz">${top}${extras}</div>`;
 }
 function lookSheet(){
   const cards=homeCards();
@@ -939,7 +939,7 @@ function home(){
     ${SKIN()==='classic'?classicHero():topFor(c,closed)}
     ${!closed&&c.left<=3?`<div class="lock" style="background:var(--accent-soft)"><span>${L('اقترب موعد الدخل الجديد','Next income is close')}</span><button class="chip" data-open="newPeriod">${L('ابدأ شهرًا جديدًا','Start a new month')}</button></div>`:''}
   </section>
-  ${homeCards().filter(x=>x.on&&blocks[x.k]&&!(SKIN()==='mizan'&&(x.k==='wallets'||x.k==='unpaid'))).map(x=>blocks[x.k]()).join('')}
+  ${homeCards().filter(x=>x.on&&blocks[x.k]&&!(SKIN()!=='classic'&&(x.k==='wallets'||x.k==='unpaid'))).map(x=>blocks[x.k]()).join('')}
   <section><button class="chip" data-open="look" style="align-self:center">✎ ${L('تخصيص الشكل والرئيسية','Customize look and home')}</button></section>`;
 }
 const walletRow=w=>{const m=wMoves(w)[0];return `<div class="item tap" data-wallet="${w.id}"><div class="ic usd">${esc(initial(w.name))}</div><div class="txt"><b>${esc(w.name)}</b><span>${m?L('آخر حركة ','Last move ')+dshort(m.date):L('اضغط للإيداع أو السحب','Tap to add or withdraw')}</span></div><div class="amt">${fmt(wBal(w))}<small>${CUR()}</small></div></div>`};
