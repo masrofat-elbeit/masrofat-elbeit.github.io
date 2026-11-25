@@ -360,7 +360,7 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 30';
+const VER='2026-11-25 · 31';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -554,35 +554,72 @@ const DRIVE={on:!!GD_CLIENT_ID,lib:false,libLoading:false,client:null,token:null
     const b='masrofat'+Math.random().toString(36).slice(2);
     const body=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(S)}\r\n--${b}--`;
     const r=await this.api(GD_API+'upload/drive/v3/files'+(this.st.fileId?'/'+this.st.fileId:'')+'?uploadType=multipart&fields=id',{method:this.st.fileId?'PATCH':'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body});
-    const j=await r.json();this.st.fileId=j.id;this.st.sent=ts;this.st.last=Date.now();this.keep()},
-  /* compare with the copy on Drive: newer one wins (like the phone-laptop sync) */
-  async sync(){if(!this.ok()||this.busy)return;this.busy=true;this.status=L('جارٍ الحفظ على Drive…','Saving to Drive…');rerenderDrive();
+    const j=await r.json();this.st.fileId=j.id;this.synced(ts)},
+  async download(id){const nd=await (await this.api(GD_API+'drive/v3/files/'+id+'?alt=media')).json();if(!nd||!nd.periods)throw {code:'bad'};return nd},
+  /* the copy both sides agreed on last time: lets two phones' changes be joined instead of one wiping the other */
+  base(){try{return JSON.parse(localStorage.getItem('masrofat_gd_base')||'null')}catch(e){return null}},
+  synced(rts){this.st.rts=rts;this.st.sent=S._ts||rts;delete this.st.dirtySince;this.st.last=Date.now();this.keep();try{localStorage.setItem('masrofat_gd_base',JSON.stringify(S))}catch(e){}},
+  /* compare with the copy on Drive; if another phone saved meanwhile, join both (mergeData) */
+  async sync(){if(!this.ok()||this.busy)return;if(sheetOpen()||typing()){clearTimeout(this.later);this.later=setTimeout(()=>this.sync(),4000);return}this.busy=true;this.status=L('جارٍ الحفظ على Drive…','Saving to Drive…');rerenderDrive();
     try{
       if(!this.st.email){const u=await (await this.api(GD_API+'drive/v3/about?fields=user(emailAddress)')).json();this.st.email=(u.user&&u.user.emailAddress)||'Google';this.keep()}
       let f=null;
       if(this.st.fileId){try{f=await (await this.api(GD_API+'drive/v3/files/'+this.st.fileId+'?fields=id,trashed,appProperties')).json();if(f.trashed)f=null}catch(e){if(e.auth)throw e;f=null}}
       if(!f){const q=encodeURIComponent(`name='${GD_FILE}' and trashed=false`);const l=await (await this.api(GD_API+'drive/v3/files?q='+q+'&orderBy=modifiedTime desc&fields=files(id,appProperties)')).json();f=(l.files||[])[0]||null}
       const first=!this.st.fileId;this.st.fileId=f?f.id:null;this.keep();
-      const rts=f&&f.appProperties?+f.appProperties.ts||0:0,lts=S._ts||0;
-      if(f&&rts>lts||f&&first&&rts&&rts!==lts){
-        let take=!S.periods.length||!first;
+      const rts=f&&f.appProperties?+f.appProperties.ts||0:0,known=this.st.rts||this.st.sent||0;
+      if(f&&first&&rts){ // this phone is linking to a Drive that already has numbers
+        let take=!S.periods.length;
         if(!take)take=confirm(L('وجدنا بيانات محفوظة سابقًا على Google Drive الخاص بك.\n\nهل تريد نقلها إلى هذا الهاتف؟\n«موافق» = جلب ما على Drive (ستُستبدل بيانات هذا الهاتف)\n«إلغاء» = الإبقاء على بيانات هذا الهاتف وحفظها على Drive','We found numbers saved before in your Google Drive.\n\nBring them to this phone?\nOK = use the Drive copy (this phone\'s numbers are replaced)\nCancel = keep this phone\'s numbers and save them to Drive'));
-        if(take){const nd=await (await this.api(GD_API+'drive/v3/files/'+f.id+'?alt=media')).json();
-          if(!nd||!nd.periods)throw {code:'bad'};
-          if(sheetOpen()||typing()){this.pendingData=nd}else this.apply(nd);this.st.sent=nd._ts||rts;this.st.last=Date.now();this.keep()}
+        if(take){const nd=await this.download(f.id);this.apply(nd);this.synced(rts)}
         else{S._ts=Date.now();await this.upload()}}
-      else if(!f||lts>rts||this.dirty())await this.upload();
-      else{this.st.sent=Math.max(this.st.sent||0,rts);this.st.last=Date.now();this.keep()}
+      else if(f&&rts&&rts!==known){ // another phone on the same Gmail saved since this one last did
+        const nd=await this.download(f.id);
+        if(this.dirty()){const m=mergeData(this.base(),S,nd);m._ts=Date.now();this.apply(m);await this.upload()}
+        else{this.apply(nd);this.synced(rts)}}
+      else if(!f||this.dirty())await this.upload();
+      else{this.st.last=Date.now();this.keep()}
       this.status=L('محفوظ على Drive','Saved to Drive')}
     catch(e){this.status=e&&e.auth?L('اضغط «حفظ على Drive» للمتابعة','Tap "Save to Drive" to continue'):!navigator.onLine?L('لا يوجد اتصال، سيتم الحفظ عند عودة الإنترنت','No internet; will save when it is back'):L('لم يتم الحفظ على Drive الآن، ستتم المحاولة مجددًا','Not saved to Drive now; will try again')}
     this.busy=false;rerenderDrive();
     if(this.ok()&&this.dirty()&&!this.timer)this.push()},
   apply(nd){S=nd;fill();LANG=S.lang;if(!S.periods.find(p=>p.id===curId))curId=(S.periods[S.periods.length-1]||{}).id;save(true);render()},
   flush(){if(this.pendingData){const nd=this.pendingData;this.pendingData=null;this.apply(nd)}},
-  push(){if(!this.linked())return;clearTimeout(this.timer);this.timer=setTimeout(()=>{this.timer=null;if(this.ok())this.sync();else{this.status=L('توجد تعديلات لم تُحفظ على Drive بعد','Some changes are not in Drive yet');rerenderDrive()}},1500)},
+  push(){if(!this.linked())return;if(!this.st.dirtySince){this.st.dirtySince=Date.now();this.keep()}clearTimeout(this.timer);this.timer=setTimeout(()=>{this.timer=null;if(this.ok())this.sync();else{this.status=L('توجد تعديلات لم تُحفظ على Drive بعد','Some changes are not in Drive yet');rerenderDrive()}},1500)},
   unlink(){try{if(this.token&&typeof google!=='undefined'&&google.accounts)google.accounts.oauth2.revoke(this.token,()=>{})}catch(e){}
     this.token=null;this.exp=0;this.st={};this.status='';this.keep();try{localStorage.removeItem('masrofat_gd_tok')}catch(e){}setStore('local');render()}
 };
+/* join two copies (this phone and Drive) against the copy they last agreed on (base).
+   Lists of things with an id (months, expenses, bills, installments, debts, wallets…) are joined item by item:
+   added on either side = kept, deleted on one side and untouched on the other = deleted, changed on one side = that change.
+   If the very same item was changed on both, this phone wins. */
+function mergeData(b,l,r){
+  const J=x=>JSON.stringify(x);
+  const isObj=x=>x&&typeof x==='object'&&!Array.isArray(x);
+  const byId=a=>Array.isArray(a)&&a.length>0&&a.every(x=>isObj(x)&&x.id!==undefined);
+  function m(b,l,r){
+    if(J(l)===J(r))return l;if(J(l)===J(b))return r;if(J(r)===J(b))return l;
+    if(Array.isArray(l)&&Array.isArray(r)){
+      if((byId(l)||!l.length)&&(byId(r)||!r.length)&&(byId(l)||byId(r))){
+        const B=new Map((Array.isArray(b)?b:[]).filter(isObj).map(x=>[x.id,x])),Lm=new Map(l.map(x=>[x.id,x])),Rm=new Map(r.map(x=>[x.id,x]));
+        const ids=[...r.map(x=>x.id),...l.map(x=>x.id).filter(i=>!Rm.has(i))],out=[];
+        for(const i of ids){const bi=B.get(i),li=Lm.get(i),ri=Rm.get(i);
+          if(li&&ri)out.push(m(bi,li,ri));
+          else if(li){if(!(bi&&J(li)===J(bi)))out.push(li)}
+          else if(ri){if(!(bi&&J(ri)===J(bi)))out.push(ri)}}
+        return out}
+      if(l.every(x=>typeof x!=='object')&&r.every(x=>typeof x!=='object')){ // names of expense types etc.
+        const bs=new Set(Array.isArray(b)?b:[]),out=[];
+        for(const x of r)if(l.includes(x)||!bs.has(x))out.push(x);
+        for(const x of l)if(!out.includes(x)&&!(bs.has(x)&&!r.includes(x)))out.push(x);
+        return out}
+      return l}
+    if(isObj(l)&&isObj(r)){const bb=isObj(b)?b:{},out={};
+      for(const k of new Set([...Object.keys(l),...Object.keys(r)])){const v=m(bb[k],l[k],r[k]);if(v!==undefined)out[k]=v}
+      return out}
+    return l}
+  return m(b,l,r);
+}
 function rerenderDrive(){if(!typing()&&!sheetOpen())render()}
 const DRIVE_ICON=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="flex:none"><path fill="#0F9D58" d="M8 3h8l6 10.5h-8z"/><path fill="#4285F4" d="M22 13.5 18 21H6l4-7.5z"/><path fill="#F4B400" d="M8 3 2 13.5 6 21l6-10.5z"/></svg>`;
 /* "where do you want your numbers kept?" (first open, and once for people who already use the app) */
@@ -595,10 +632,13 @@ function storeChoice(welcome){
     ${welcome&&FB_CONFIG?`<button class="chip" data-act="storeAccount" style="align-self:flex-start">${L('لديّ حساب قديم في التطبيق ببريد وكلمة مرور','I have an old app account with email and password')}</button>`:''}
     <p class="note" style="margin:0">${L('🔒 لا يستطيع صاحب التطبيق رؤية بياناتك بأي حال. ويمكنك تغيير اختيارك لاحقًا من الإعدادات.','🔒 The app owner cannot see your numbers either way. You can change this later in Settings.')} <a href="privacy.html" style="color:var(--accent-text)">${L('سياسة الخصوصية','Privacy policy')}</a></p></div>`;
 }
-/* small bar on the home page when changes are waiting for a tap (Google asks again about once an hour) */
+/* small bar on the home page when changes are waiting for a tap (Google's permission lasts about an hour).
+   The owner asked for it once at the end of the day, not every hour: after 9 pm, or if changes have waited since an earlier day. */
 function driveBar(){
   if(!DRIVE.linked()||DRIVE.ok()||!DRIVE.dirty())return '';
-  return `<div class="lock"><span>${DRIVE_ICON.replace('style="flex:none"','style="vertical-align:-5px"')} ${L('توجد تعديلات لم تُحفظ على Google Drive بعد','Some changes are not saved to Google Drive yet')}</span><button class="chip" data-act="driveNow">${L('احفظ الآن','Save now')}</button></div>`;
+  const now=new Date(),since=new Date(DRIVE.st.dirtySince||Date.now());
+  if(now.getHours()<21&&since.toDateString()===now.toDateString())return '';
+  return `<div class="lock"><span>${DRIVE_ICON.replace('style="flex:none"','style="vertical-align:-5px"')} ${L('توجد تعديلات لم تُحفظ على Google Drive بعد','Some changes are not saved to Google Drive yet')}</span><button class="chip" data-act="driveNow">${L('احفظ الآن','Save now')}</button><span class="note" style="flex-basis:100%">${L('بياناتك محفوظة على الهاتف، وهذا الزر يرسل نسخة منها إلى Drive.','Your numbers are safe on the phone. This sends a copy to Drive.')}</span></div>`;
 }
 function driveCard(){
   if(DRIVE.linked()){const t=DRIVE.st.last?new Date(DRIVE.st.last).toLocaleString(LANG==='en'?'en-GB':'ar-EG-u-nu-latn',{weekday:'short',hour:'2-digit',minute:'2-digit'}):'';
