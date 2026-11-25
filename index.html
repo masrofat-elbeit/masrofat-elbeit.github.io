@@ -265,6 +265,7 @@ header.top .who{flex:1 1 100%}
 :root:not([data-skin="classic"]) nav.tabs div{grid-template-columns:repeat(5,1fr)}
 :root:not([data-skin="classic"]) .fab{inset-inline-end:auto;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;z-index:7}
 :root:not([data-skin="classic"]) nav.tabs button{font-size:11px}
+nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 .tabgap{display:none}
 :root:not([data-skin="classic"]) .tabgap{display:block}
 /* home tops for each shape */
@@ -350,7 +351,7 @@ header.top .who{flex:1 1 100%}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 25';
+const VER='2026-11-25 · 26';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -651,7 +652,7 @@ function installSteps(){
   if(k==='android')return L(`<ol class="steps"><li>اضغط ⋮ أعلى الشاشة.</li><li>اختر <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.</li></ol>`,`<ol class="steps"><li>Tap ⋮ at the top right.</li><li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li></ol>`);
   return L(`<ol class="steps"><li>على الحاسوب: اضغط أيقونة التثبيت في نهاية شريط العنوان، أو ⋯ ← <b>«التطبيقات»</b> ← <b>«تثبيت»</b>.</li><li>على الهاتف: صوّر رمز QR من «شارك التطبيق».</li></ol>`,`<ol class="steps"><li>On a computer: click the install icon at the end of the address bar, or ⋯ → <b>Apps</b> → <b>Install</b>.</li><li>On a phone: scan the QR code from "Share the app".</li></ol>`);
 }
-function keepMine(next){next.profile=S.profile;next.lang=S.lang;next.cur=S.cur;next.skin=S.skin;next.tint=S.tint;next.cards=S.cards;next.rateAuto=S.rateAuto;if(S.rateAuto&&RATE.buy)next.rate=RATE.buy;return next}
+function keepMine(next){next.profile=S.profile;next.lang=S.lang;next.cur=S.cur;next.skin=S.skin;next.tint=S.tint;next.cards=S.cards;next.nav=S.nav;next.rateAuto=S.rateAuto;if(S.rateAuto&&RATE.buy)next.rate=RATE.buy;return next}
 
 let curId=(S.periods[S.periods.length-1]||{}).id, tab='home', filter='*', QUICK=false;
 const UNLOCKED=new Set();
@@ -858,11 +859,13 @@ function lookSheet(){
     <div class="field"><label>${L('الشكل','Shape')}</label><div class="skins">${SKINS.map(([k,n,c])=>`<button class="skin ${SKIN()===k?'on':''}" data-skin="${k}"><i>${c.map(x=>`<u style="background:${x}"></u>`).join('')}</i><b>${n()}</b></button>`).join('')}</div>
     <p class="note" style="margin:4px 0 0">${L('بياناتك لا تتغير بتغيير الشكل.','Changing the shape never changes your numbers.')}</p></div>
     <div class="field"><label>${L('اللون','Colour')}</label><div class="tints"><button class="def ${S.tint?'':'on'}" data-tint="" aria-label="${L('لون الشكل الأصلي','Shape colour')}"></button>${TINTS.map(t=>`<button class="${S.tint===t?'on':''}" data-tint="${t}" style="background:${t}" aria-label="${t}"></button>`).join('')}</div></div>
+    <div class="field"><label>${L('الشريط السفلي','Bottom bar')}</label><div class="seg"><button class="${NAVMODE()==='short'?'on':''}" data-nav="short">${L('مختصر + «المزيد»','Short + "More"')}</button><button class="${NAVMODE()==='full'?'on':''}" data-nav="full">${L('كل الصفحات','All pages')}</button></div></div>
     <div class="field"><label>${L('ما يظهر في الرئيسية وترتيبه','What shows on Home, and in what order')}</label>
     <div>${cards.map((x,i)=>`<div class="cardrow"><label><input type="checkbox" class="chk" id="hc-${x.k}" data-card="${x.k}" ${x.on?'checked':''}><span>${(CARDS.find(c=>c[0]===x.k)||[0,()=>x.k])[1]()}</span></label><button class="x" data-cardmove="${i}" data-dir="-1" aria-label="${L('لأعلى','Up')}" ${i?'':'disabled'}>↑</button><button class="x" data-cardmove="${i}" data-dir="1" aria-label="${L('لأسفل','Down')}" ${i<cards.length-1?'':'disabled'}>↓</button></div>`).join('')}</div></div>
     <button class="btn full" data-act="lookDone">${L('تم','Done')}</button>`;
 }
 let PRECAT=null;
+const NAVMODE=()=>S.nav==='full'||S.nav==='short'?S.nav:(SKIN()==='classic'?'full':'short');
 const daysTxt=n=>LANG==='en'?`${n} day${n===1?'':'s'}`:n===1?'يوم واحد':n===2?'يومان':n<=10?`${n} أيام`:`${n} يومًا`;
 function home(){
   const c=calc(), p=c.p;
@@ -1417,7 +1420,11 @@ function render(){
   $('#shareBtn').setAttribute('aria-label',L('شارك التطبيق','Share the app'));
   document.querySelector('meta[name=apple-mobile-web-app-title]').content=L('مصروفات البيت','Home Expenses');
   const tb=([k,ic,lb])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><svg viewBox="0 0 24 24">${ic}</svg>${lb()}</button>`;
-  $('#tabs').innerHTML=SKIN()==='classic'?TABS.map(tb).join(''):[TABS[0],TABS[1]].map(tb).join('')+'<span class="tabgap"></span>'+tb(TABS[4])+`<button data-open="more" class="${['fixed','money','settings'].includes(tab)?'on':''}"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>${L('المزيد','More')}</button>`;
+  const cls=SKIN()==='classic', gap=cls?'':'<span class="tabgap"></span>';
+  const more=`<button data-open="more" class="${['fixed','money','settings'].includes(tab)?'on':''}"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>${L('المزيد','More')}</button>`;
+  const items=NAVMODE()==='full'?TABS.slice(0,3).map(tb).join('')+gap+TABS.slice(3).map(tb).join(''):[TABS[0],TABS[1]].map(tb).join('')+gap+tb(TABS[4])+more;
+  const n=(NAVMODE()==='full'?6:4)+(cls?0:1);
+  $('#tabs').innerHTML=items;$('#tabs').style.gridTemplateColumns=`repeat(${n},1fr)`;$('#tabs').dataset.n=n;
   const p=P();
   if(!p){
     $('#mLabel').innerHTML='—';
@@ -1451,6 +1458,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.editplan){const o=S.plans.find(x=>x.id===t.dataset.editplan);if(o)openSheet('plan',o);return}
   if(t.dataset.editcat){const [list,i]=t.dataset.editcat.split(':');openSheet('cat',{list,name:S[list][+i]});return}
   if(t.dataset.lang){LANG=S.lang=t.dataset.lang;save();render();return}
+  if(t.dataset.nav){S.nav=t.dataset.nav;save();render();openSheet('look');return}
   if(t.dataset.skin){S.skin=t.dataset.skin;save();render();openSheet('look');return}
   if(t.dataset.tint!==undefined&&t.closest('.tints')){S.tint=t.dataset.tint||undefined;if(!S.tint)delete S.tint;save();render();openSheet('look');return}
   if(t.dataset.cardmove){const cs=homeCards(),i=+t.dataset.cardmove,j=i+ +t.dataset.dir;if(j<0||j>=cs.length)return;[cs[i],cs[j]]=[cs[j],cs[i]];S.cards=cs;save();render();openSheet('look');return}
