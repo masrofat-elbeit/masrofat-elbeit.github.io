@@ -309,6 +309,8 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 .pill .pr,.pill.pr{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .pill .pr span{font-size:14px;color:var(--ink)}.pill .pr b{font-size:15px}
 .pill.pr{flex-direction:row}.pill.pr span{font-size:14px;color:var(--ink)}
+.sal3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.sal3 div{display:flex;flex-direction:column;min-width:0}.sal3 small{font-size:11px;color:var(--muted)}.sal3 b{font-size:16px}
 /* look picker */
 .skins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .skin{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px;align-items:stretch;font:inherit;color:inherit}
@@ -351,7 +353,7 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 26';
+const VER='2026-11-25 · 27';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -779,7 +781,7 @@ const SKINS=[
   ['lamsa',()=>L('لمسة','Lamsa'),['#1C1B22','#FFB4A2','#B8E0D2']]];
 const TINTS=['#0F5C4D','#2F5BD3','#8A3FB8','#C2412A','#B07A12','#D6457A','#0E7C86','#2B2B33'];
 const SKIN=()=>SKINS.some(x=>x[0]===S.skin)?S.skin:'classic';
-const CARDS=[['unpaid',()=>L('المصروفات الأساسية غير المدفوعة','Unpaid bills')],['pace',()=>L('معدل الصرف','Spending pace')],['days',()=>L('الصرف يومًا بيوم','Day by day')],['cats',()=>L('أين ذهب المال؟','Where the money went')],['wallets',()=>L('المحافظ','Wallets')],['plans',()=>L('الأقساط والجمعيات','Installments')],['debts',()=>L('الديون والسلف','Debts')],['months',()=>L('الشهور','Months')],['recent',()=>L('آخر ما سُجّل','Latest entries')]];
+const CARDS=[['salary',()=>L('الراتب والتحويل (الأشكال الجديدة)','Salary and conversion (new shapes)')],['unpaid',()=>L('المصروفات الأساسية غير المدفوعة','Unpaid bills')],['pace',()=>L('معدل الصرف','Spending pace')],['days',()=>L('الصرف يومًا بيوم','Day by day')],['cats',()=>L('أين ذهب المال؟','Where the money went')],['wallets',()=>L('المحافظ','Wallets')],['plans',()=>L('الأقساط والجمعيات','Installments')],['debts',()=>L('الديون والسلف','Debts')],['months',()=>L('الشهور','Months')],['recent',()=>L('آخر ما سُجّل','Latest entries')]];
 function homeCards(){const saved=Array.isArray(S.cards)?S.cards.filter(x=>CARDS.some(c=>c[0]===x.k)):[];
   CARDS.forEach(([k],i)=>{if(!saved.some(x=>x.k===k)){const at=Math.min(saved.length,i);saved.splice(at,0,{k,on:true})}});return saved}
 function applyLook(){
@@ -813,7 +815,11 @@ function topFor(c,closed){
   /* the same light cards under every shape: wallets, then bills still to pay */
   const shown=x=>(homeCards().find(y=>y.k===x)||{}).on!==false;
   const bills=closed||!shown('unpaid')?[]:p.fixed.filter(f=>!f.paid).slice(0,2);
-  const extras=`${S.wallets.length&&shown('wallets')?`<div class="pill tap" data-go="wallets"><span>${L('المحافظ','Wallets')} · <span class="num">${fmt(wTotal())}</span></span>${S.wallets.slice(0,3).map(w=>`<div class="pr"><span>${esc(w.name)}</span><b>${fmt(wBal(w))}</b></div>`).join('')}</div>`:''}
+  const usdSal=p.salary.cur==='USD';
+  const rateNote=usdSal?(CURC()==='EGP'&&S.rateAuto&&RATE.buy?L('سعر CIB ','CIB rate ')+RATE.buy:L('سعر الحساب ','Rate ')+S.rate):'';
+  const salPill=shown('salary')?`<div class="pill tap" data-act="goMoney"><span>${L('الراتب ✎','Salary ✎')}${rateNote?` · <span class="num">${rateNote}</span>`:''}</span>
+      ${usdSal?`<div class="sal3"><div><small>${L('الراتب','Salary')}</small><b>$${fmt(p.salary.amount)}</b></div><div><small>${L('تم تحويله','Converted')}</small><b>$${fmt(c.transUSD)}</b><small class="num">${fmt(c.transEGP)} ${CUR()}</small></div><div><small>${L('لم يُحوَّل بعد','Not converted')}</small><b>$${fmt(c.usdLeft)}</b><small class="num">≈ ${fmt(c.usdLeft*S.rate)} ${CUR()}</small></div></div>`:`<b>${salary}</b>`}</div>`:'';
+  const extras=`${salPill}${S.wallets.length&&shown('wallets')?`<div class="pill tap" data-go="wallets"><span>${L('المحافظ','Wallets')} · <span class="num">${fmt(wTotal())}</span></span>${S.wallets.slice(0,3).map(w=>`<div class="pr"><span>${esc(w.name)}</span><b>${fmt(wBal(w))}</b></div>`).join('')}</div>`:''}
       ${bills.map(f=>`<div class="pill pr tap" data-go="fixed"><span>${esc(f.name)} · ${L('لم يُدفع','not paid')}</span><b>${fmt(f.amount)}</b></div>`).join('')}`;
   const two=(a,b)=>`<div class="mz2">${a}${b}</div>`;
   const pill=(l,v,attr='')=>`<div class="pill ${attr?'tap':''}" ${attr}><span>${l}</span><b>${v}</b></div>`;
@@ -849,7 +855,6 @@ function topFor(c,closed){
       <button class="tile tall" data-go="daily" style="background:#FFB4A2"><span>${L('صرفت','Spent')}</span><b class="num">${pct}%</b><span>${ofTxt}</span></button>
       <button class="tile" data-go="daily" style="background:#B8E0D2"><span>${L('اليوم','Today')}</span><b class="num">${fmt(today)}</b></button>
       <button class="tile" data-act="goMoney" style="background:#CDB4DB"><span>${daysLbl}</span><b>${days}</b></button>
-      <button class="tile wide" data-act="goMoney" style="background:#FDF0D5"><span>${L('الراتب ✎','Salary ✎')}</span><b>${salary}</b></button>
     </div>`;
   return `<div class="mz">${top}${extras}</div>`;
 }
@@ -943,7 +948,7 @@ function home(){
     ${SKIN()==='classic'?classicHero():topFor(c,closed)}
     ${!closed&&c.left<=3?`<div class="lock" style="background:var(--accent-soft)"><span>${L('اقترب موعد الدخل الجديد','Next income is close')}</span><button class="chip" data-open="newPeriod">${L('ابدأ شهرًا جديدًا','Start a new month')}</button></div>`:''}
   </section>
-  ${homeCards().filter(x=>x.on&&blocks[x.k]&&!(SKIN()!=='classic'&&(x.k==='wallets'||x.k==='unpaid'))).map(x=>blocks[x.k]()).join('')}
+  ${homeCards().filter(x=>x.on&&blocks[x.k]&&!(SKIN()!=='classic'&&(x.k==='wallets'||x.k==='unpaid'||x.k==='salary'))).map(x=>blocks[x.k]()).join('')}
   <section><button class="chip" data-open="look" style="align-self:center">✎ ${L('تخصيص الشكل والرئيسية','Customize look and home')}</button></section>`;
 }
 const walletRow=w=>{const m=wMoves(w)[0];return `<div class="item tap" data-wallet="${w.id}"><div class="ic usd">${esc(initial(w.name))}</div><div class="txt"><b>${esc(w.name)}</b><span>${m?L('آخر حركة ','Last move ')+dshort(m.date):L('اضغط للإيداع أو السحب','Tap to add or withdraw')}</span></div><div class="amt">${fmt(wBal(w))}<small>${CUR()}</small></div></div>`};
