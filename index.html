@@ -17,7 +17,7 @@
 (function(){var F={classic:'Tajawal:wght@400;500;700;800',mizan:'Readex+Pro:wght@400;500;600;700',raseed:'IBM+Plex+Sans+Arabic:wght@400;500;700',daftar:'Noto+Kufi+Arabic:wght@500;700;800&family=Noto+Naskh+Arabic:wght@400;600;700',hassala:'Baloo+Bhaijaan+2:wght@500;600;700;800',lamsa:'Alexandria:wght@400;500;600;800'},k='classic',t='';
 try{k=localStorage.getItem('masrofat_skin')||'classic';t=localStorage.getItem('masrofat_tint')||''}catch(e){}if(!F[k])k='classic';
 var r=document.documentElement;r.setAttribute('data-skin',k);if(t){r.setAttribute('data-tint','');r.style.setProperty('--tint',t)}
-var l=document.createElement('link');l.rel='stylesheet';l.id='skinFont';l.href='https://fonts.googleapis.com/css2?family='+F[k]+'&display=swap';document.head.appendChild(l);window.SKIN_FONTS=F})()</script>
+var l=document.createElement('link');l.rel='stylesheet';l.id='skinFont';l.media='print';l.onload=function(){this.media='all'};l.href='https://fonts.googleapis.com/css2?family='+F[k]+'&display=swap';document.head.appendChild(l);window.SKIN_FONTS=F})()</script>
 <style>
 /* VOICE: calm household ledger, plain Modern Standard Arabic first, English on demand
    IDEA: the family's monthly account book; six shapes the user picks from (classic gold on charcoal, Mizan, Raseed, Daftar, Hassala, Lamsa)
@@ -360,7 +360,7 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 31';
+const VER='2026-11-25 · 32';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
