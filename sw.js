@@ -1,6 +1,6 @@
 // Offline support. The app opens straight from the phone's copy, with or without internet,
 // and quietly fetches the newest version in the background for the next time it opens.
-const CACHE='masrofat-v38';
+const CACHE='masrofat-v39';
 const FONTS='masrofat-fonts'; // Google Fonts, kept across versions so the app looks the same offline
 const FILES=['./','./index.html','./manifest.webmanifest','./icon2-192.png','./icon2-512.png','./icon3-180.png','./qr.png','./icon3-maskable-512.png','./logo.png','./privacy.html'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.all(FILES.map(f=>fetch(f,{cache:'reload'}).then(r=>r.ok&&c.put(f,r)).catch(()=>{})))));self.skipWaiting()});

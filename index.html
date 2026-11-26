@@ -360,7 +360,7 @@ nav.tabs div[data-n="7"] button{font-size:9.5px;padding-inline:0}
 <script>
 (function(){
 const KEY='masrofat_elbeit_app_v1';
-const VER='2026-11-25 · 32';
+const VER='2026-11-26 · 33';
 const TODAY=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -370,7 +370,19 @@ const CAT_EN={'أكل وشرب':'Food & drinks','مصاريف البيت':'House
 
 /* ---------- language ---------- */
 let LANG='ar';
-const L=(ar,en)=>LANG==='en'?en:ar;
+/* income type (S.income): what the money that starts each month is called. undefined = 'salary' (everyone before Nov 2026) */
+const INCOMES=[['salary','راتب','Salary'],['pension','معاش','Pension'],['project','مشروع أو عمل حر','Business or freelance'],['allowance','مصروف من الزوج أو الأهل','Monthly allowance (from spouse or family)']];
+const INC=()=>{const v=typeof S!=='undefined'&&S&&S.income;return INCOMES.some(x=>x[0]===v)?v:'salary'};
+const INC_W={
+  pension:{ar:[['راتبك أو دخلك','معاشك أو دخلك'],['بالراتب','بالمعاش'],['الراتب','المعاش'],['راتبك','معاشك'],['راتب','معاش']],
+           en:[['salary bank','pension bank'],['Salary','Pension'],['salary','pension']]},
+  project:{ar:[['راتبك أو دخلك','دخلك'],['بالراتب','بدخل المشروع'],['الراتب','دخل المشروع'],['راتبك','دخل مشروعك'],['راتب','دخل']],
+           en:[['salary bank','bank'],['salary or income','income'],['Salary','Income'],['salary','income']]},
+  allowance:{ar:[['راتبك أو دخلك','مصروف البيت'],['بالراتب','بمصروف البيت'],['الراتب','مصروف البيت'],['راتبك','مصروف البيت'],['راتب شهر','مصروف شهر'],['راتب','مصروف']],
+           en:[['salary bank','bank'],['salary or income','allowance'],['Salary','Allowance'],['salary','allowance']]}};
+const incW=(t,en)=>{const k=INC();if(k==='salary'||typeof t!=='string')return t;for(const [a,b] of INC_W[k][en?'en':'ar'])t=t.split(a).join(b);return t};
+const L=(ar,en)=>LANG==='en'?incW(en,1):incW(ar,0);
+const incOpts=()=>INCOMES.map(x=>`<button class="chip ${INC()===x[0]?'on':''}" data-inc="${x[0]}">${LANG==='en'?x[2]:x[1]}</button>`).join('');
 const DIR=()=>LANG==='en'?'ltr':'rtl';
 const MONTHS=()=>LANG==='en'?MONTHS_EN:MONTHS_AR;
 const catN=c=>LANG==='en'&&CAT_EN[c]?CAT_EN[c]:c;
@@ -701,7 +713,7 @@ function installSteps(){
   if(k==='android')return L(`<ol class="steps"><li>اضغط ⋮ أعلى الشاشة.</li><li>اختر <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.</li></ol>`,`<ol class="steps"><li>Tap ⋮ at the top right.</li><li>Choose <b>Install app</b> or <b>Add to Home screen</b>.</li></ol>`);
   return L(`<ol class="steps"><li>على الحاسوب: اضغط أيقونة التثبيت في نهاية شريط العنوان، أو ⋯ ← <b>«التطبيقات»</b> ← <b>«تثبيت»</b>.</li><li>على الهاتف: صوّر رمز QR من «شارك التطبيق».</li></ol>`,`<ol class="steps"><li>On a computer: click the install icon at the end of the address bar, or ⋯ → <b>Apps</b> → <b>Install</b>.</li><li>On a phone: scan the QR code from "Share the app".</li></ol>`);
 }
-function keepMine(next){next.profile=S.profile;next.lang=S.lang;next.cur=S.cur;next.skin=S.skin;next.tint=S.tint;next.cards=S.cards;next.nav=S.nav;next.voiceAuto=S.voiceAuto;next.voiceSave=S.voiceSave;next.rateAuto=S.rateAuto;if(S.rateAuto&&RATE.buy)next.rate=RATE.buy;return next}
+function keepMine(next){next.profile=S.profile;if(S.income)next.income=S.income;next.lang=S.lang;next.cur=S.cur;next.skin=S.skin;next.tint=S.tint;next.cards=S.cards;next.nav=S.nav;next.voiceAuto=S.voiceAuto;next.voiceSave=S.voiceSave;next.rateAuto=S.rateAuto;if(S.rateAuto&&RATE.buy)next.rate=RATE.buy;return next}
 
 let curId=(S.periods[S.periods.length-1]||{}).id, tab='home', filter='*', QUICK=false;
 const UNLOCKED=new Set();
@@ -807,6 +819,7 @@ function onboarding(){
     <img class="logo" src="logo.png" alt="">
     <h2>${L('ابدأ حسابك من اليوم','Start your account today')}</h2>
     <div class="field" style="text-align:start"><label for="curSel">${L('عملتك','Your currency')}</label><select id="curSel">${curOpts()}</select></div>
+    <div class="field" style="text-align:start"><label>${L('من أين يأتي المبلغ الذي تصرف منه كل شهر؟','Where does the money you spend each month come from?')}</label><div class="chips" id="incChips" style="flex-wrap:wrap">${incOpts()}</div></div>
     <p class="note" style="margin:0">${L('سجّل راتبك ويوم استلامه، ويصبح هذا اليوم بداية الشهر. عند استلام الراتب التالي يُغلق هذا الشهر تلقائيًا، ويمكنك الرجوع إليه في أي وقت.','Enter your salary and the day it arrived; that day starts the month. When the next salary arrives, this month closes by itself and you can come back to it any time.')}</p>
     <button class="btn full" data-open="newPeriod">${L('سجّل الراتب وابدأ','Enter salary and start')}</button>
     <button class="btn ghost full" data-act="reset">${L('جرّب التطبيق ببيانات تجريبية','Try it with sample numbers')}</button>
@@ -851,7 +864,7 @@ function parseOne(raw,defDate){
   const t=VNORM(raw).replace(/[.!؟?،,]/g,' ').replace(/\s+/g,' ').trim();
   const r={raw,amount:vAmount(t),date:defDate||TODAY,kind:'daily'};
   if(/(اول امبارح|اول امس)/.test(t))r.date=addDays(TODAY,-2);else if(/(امبارح|امس)/.test(t))r.date=addDays(TODAY,-1);else if(/(النهارده|اليوم)/.test(t))r.date=TODAY;
-  if(/(مرتب|راتب|قبضت|القبض|دخل جديد|شهر جديد)/.test(t)&&!/(صرفت|دفعت)/.test(t)){r.kind='salary';r.cur=/(دولار|\$|usd)/.test(t)&&dollarOK()?'USD':'EGP';return r}
+  if(/(مرتب|راتب|معاش|قبضت|القبض|دخل جديد|شهر جديد)/.test(t)&&!/(صرفت|دفعت)/.test(t)){r.kind='salary';r.cur=/(دولار|\$|usd)/.test(t)&&dollarOK()?'USD':'EGP';return r}
   const w=S.wallets.find(x=>{const n=VNORM(x.name);return n.length>1&&t.includes(n)});if(w)r.from=w.id;
   let cat=S.cats.find(c=>{const n=VNORM(c);return n.length>2&&t.includes(n)});
   let hit='';
@@ -1318,6 +1331,11 @@ function settings(){
     </div>
   </section>
   <section>
+    <h2>${L('مصدر الدخل الشهري','Monthly income source')}</h2>
+    <div class="chips" id="incChips" style="flex-wrap:wrap">${incOpts()}</div>
+    <p class="note" style="margin:0">${(LANG==='en'?(a,b)=>b:(a,b)=>a)('يغيّر الكلمات في التطبيق فقط (راتب، معاش، دخل المشروع، مصروف البيت)، ولا يغيّر أي مبلغ مسجّل. والدخل من عمل إضافي يُسجَّل في «الدخل» ← «دخل إضافي».','Changes the words in the app only (salary, pension, business income, allowance); recorded amounts stay the same. Money from side work goes in "Income" → "Extra money".')}</p>
+  </section>
+  <section>
     <h2>${L('العملة','Currency')}</h2>
     <div class="field"><select id="curSel" aria-label="${L('العملة','Currency')}">${curOpts()}</select></div>
     <p class="note" style="margin:0">${L('تغيير العملة يغيّر رمزها فقط، ولا يحوّل المبالغ المسجّلة.','Changing the currency changes its symbol only; recorded amounts are not converted.')}</p>
@@ -1661,6 +1679,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.lang){LANG=S.lang=t.dataset.lang;save();render();return}
   if(t.dataset.vdrop){VOICE.pending.splice(+t.dataset.vdrop,1);if(!VOICE.pending.length){closeSheet();return}openSheet('voiceList');return}
   if(t.dataset.vsave){S.voiceSave=t.dataset.vsave;save();render();return}
+  if(t.dataset.inc){S.income=t.dataset.inc;save();render();toast(L('تم الحفظ','Saved'));return}
   if(t.dataset.nav){S.nav=t.dataset.nav;save();render();openSheet('look');return}
   if(t.dataset.skin){S.skin=t.dataset.skin;save();render();openSheet('look');return}
   if(t.dataset.tint!==undefined&&t.closest('.tints')){S.tint=t.dataset.tint||undefined;if(!S.tint)delete S.tint;save();render();openSheet('look');return}
